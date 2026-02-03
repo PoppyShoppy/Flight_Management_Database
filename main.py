@@ -7,7 +7,7 @@ import sqlite3
 class DBOperations:
   sql_create_table_firsttime = "create table if not exists "
 
-  sql_create_table = "create table TableName"
+  sql_create_table = "CREATE TABLE IF NOT EXISTS 'Flights' (FlightID INTEGER PRIMARY KEY, FlightOrigin VARCHAR(20), FlightDestination VARCHAR(20), Status VARCHAR(20));"
 
   sql_insert = ""
   sql_select_all = "select * from TableName"
