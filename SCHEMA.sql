@@ -25,12 +25,15 @@ CREATE TABLE IF NOT EXISTS pilots (
     pilot_rank VARCHAR(20)    
 );
 
--- Flights table
+SELECT   f.FlightID, 
+f.flight_number, d1.airport_iata_code AS Origin, d2.airport_iata_code AS Destination, f.Status FROM flights f JOIN destinations d1 ON f.flightOrigin = d1.destination_id JOIN destinations d2 ON f.flightDestination = d2.destination_id;
+
+select flight_number, status, flightOrigin AS ORIGIN, flightDestination AS DESTINATION from flights JOIN destinations ON flights.flightOrigin = destinations.destination_id where ; 
+
 -- Flights table
 CREATE TABLE IF NOT EXISTS flights (
     FlightID INTEGER PRIMARY KEY AUTOINCREMENT, -- identifies a specific flight instance
     flight_number VARCHAR(10) NOT NULL,  -- e.g., 'AA123'
-    flight_duration INTEGER, -- Stored in minutes for precision and easy calculation
     Status VARCHAR(15), -- e.g., 'Scheduled', 'Delayed', 'Cancelled', 'Completed', 'Boarding'
     -- Foreign keys
     flightOrigin INTEGER,  -- Where the flight starts
@@ -96,22 +99,22 @@ INSERT INTO pilots (employee_id, first_name, last_name, contact_number, license_
 ('EMP014', 'Patricia', 'Thompson', '555-0114', 'LIC001014', 'First Officer'),
 ('EMP015', 'Daniel', 'Garcia', '555-0115', 'LIC001015', 'Captain');
 
-INSERT INTO flights (flight_number, flight_duration, Status, flightOrigin, flightDestination) VALUES
-('AA100', 720, 'Completed', 1, 2),
-('BA201', 720, 'Completed', 2, 1),
-('AF302', 150, 'Scheduled', 3, 5),
-('KL403', 135, 'Scheduled', 4, 3),
-('LH504', 150, 'Boarding', 5, 4),
-('AZ605', 165, 'Delayed', 8, 9),
-('EI706', 75, 'Scheduled', 7, 2),
-('IB807', 150, 'Scheduled', 9, 10),
-('VY908', 105, 'Scheduled', 10, 9),
-('SR009', 135, 'Scheduled', 11, 12),
-('OS110', 150, 'Scheduled', 12, 11),
-('DL211', 180, 'Scheduled', 1, 13),
-('UA312', 210, 'Scheduled', 14, 15),
-('AM413', 75, 'Scheduled', 15, 13),
-('AC514', 480, 'Scheduled', 2, 1);
+INSERT INTO flights (flight_number, Status, flightOrigin, flightDestination) VALUES
+('AA100', 'Completed', 1, 2),
+('BA201', 'Completed', 2, 1),
+('AF302', 'Scheduled', 3, 5),
+('KL403', 'Scheduled', 4, 3),
+('LH504', 'Boarding', 5, 4),
+('AZ605', 'Delayed', 8, 9),
+('EI706', 'Scheduled', 7, 2),
+('IB807', 'Scheduled', 9, 10),
+('VY908', 'Scheduled', 10, 9),
+('SR009', 'Scheduled', 11, 12),
+('OS110', 'Scheduled', 12, 11),
+('DL211', 'Scheduled', 1, 13),
+('UA312', 'Scheduled', 14, 15),
+('AM413', 'Scheduled', 15, 13),
+('AC514', 'Scheduled', 2, 1);
 
 -- Assign pilots to flights (2 pilots per flight)
 INSERT INTO flight_crew (flight_id, pilot_id, role, is_flying_pilot) VALUES

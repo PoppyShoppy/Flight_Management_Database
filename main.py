@@ -1,23 +1,54 @@
 import sqlite3
-
+from SCHEMA import SCHEMA_SQL
 # Define DBOperation class to manage all data into the database.
 # Give a name of your choice to the database
 
 
 class DBOperations:
-  sql_create_table_firsttime = ""
+  sql_create_table_firsttime = SCHEMA_SQL
 
   sql_create_table = "create table TableName"
   sql_insert = "INSERT INTO flights (flight_number, flight_duration, Status, flightOrigin, flightDestination) VALUES (?, ?, ?, ?, ?)"
   sql_insert_destination = "INSERT INTO destinations (airport_iata_code, airport_name, city, country) VALUES (?, ?, ?, ?)"
   sql_insert_pilot = "INSERT INTO pilots (employee_id, first_name, last_name, contact_number, license_number, pilot_rank) VALUES (?, ?, ?, ?, ?, ?)"
   sql_insert_flight_crew = "INSERT INTO flight_crew (flight_id, pilot_id, role, is_flying_pilot) VALUES (?, ?, ?, ?)"
-  sql_select_all = "select * from TableName"
+  sql_select_all_flights = "SELECT f.flight_number, d1.airport_iata_code AS Origin, d2.airport_iata_code AS Destination, f.Status FROM flights f JOIN destinations d1 ON f.flightOrigin = d1.destination_id JOIN destinations d2 ON f.flightDestination = d2.destination_id;"
+  sql_select_all_destinations = "select * from destinations" 
+  sql_select_all_pilots = "select * from pilots"
+  sql_select_all_flight_crew = "select * from flight_crew" 
   sql_search = "select * from TableName where FlightID = ?"
   sql_alter_data = ""
   sql_update_data = ""
   sql_delete_data = ""
   sql_drop_table = ""
+
+
+  def __init__(self):
+    try:
+      self.conn = sqlite3.connect("DBName.db")
+      self.cur = self.conn.cursor()
+      self.cur.executescript(self.sql_create_table_firsttime)
+      self.conn.commit()
+      print("Database and tables initiated successfullly.")
+    except Exception as e:
+      print(e)
+    finally:
+      self.conn.close()
+
+  def get_connection(self):
+    self.conn = sqlite3.connect("DBName.db")
+    self.cur = self.conn.cursor()
+
+  def create_table(self):
+    try:
+      self.get_connection()
+      self.cur.execute(self.sql_create_table)
+      self.conn.commit()
+      print("Table created successfully")
+    except Exception as e:
+      print(e)
+    finally:
+      self.conn.close()
 
   def find_destination_by_city_or_iata(self, city_or_iata):
     """Look up destination_id by city name or IATA code"""
@@ -63,7 +94,7 @@ class DBOperations:
   def insert_pilot(self):
     try:
       self.get_connection()
-      emp = input("Enter employee id: ")
+      emp = input("Enter employee id: e.g. EMP001")
       first = input("Enter first name: ")
       last = input("Enter last name: ")
       contact = input("Enter contact number: ")
@@ -101,32 +132,6 @@ class DBOperations:
     finally:
       self.conn.close()
 
-  def __init__(self):
-    try:
-      self.conn = sqlite3.connect("DBName.db")
-      self.cur = self.conn.cursor()
-      self.cur.execute(self.sql_create_table_firsttime)
-      self.conn.commit()
-    except Exception as e:
-      print(e)
-    finally:
-      self.conn.close()
-
-  def get_connection(self):
-    self.conn = sqlite3.connect("DBName.db")
-    self.cur = self.conn.cursor()
-
-  def create_table(self):
-    try:
-      self.get_connection()
-      self.cur.execute(self.sql_create_table)
-      self.conn.commit()
-      print("Table created successfully")
-    except Exception as e:
-      print(e)
-    finally:
-      self.conn.close()
-
   def insert_data(self):
     try:
       self.get_connection()
@@ -134,7 +139,7 @@ class DBOperations:
       flight = FlightInfo()
       #flight.set_flight_id(int(input("Enter FlightID: ")))  
       
-      flight.set_flight_number(input("Enter Flight Number: e.g. BB123 for Bobo Airlines flight 123: "))
+      flight.set_flight_number(input("Enter Flight Number: e.g. BB123 for Bonobo Airlines flight 123: "))
 
       ### ENTER FLIGHT ORIGIN SECTION
       origin = input("Enter Flight Origin (City or IATA code): ")
@@ -185,10 +190,34 @@ class DBOperations:
 
   def select_all(self):
     try:
+      select_all_choice=int(input("\nWhat table do you want to select from?" "\n1. Flights" "\n2. Destinations" "\n3. Pilots" "\n4. Flight_crew" "\n5. Exit Menu" "\nEnter your choice: "))
+      if select_all_choice == 1:
+        self.sql_select_all = self.sql_select_all_flights
+      elif select_all_choice == 2:
+        self.sql_select_all = self.sql_select_all_destinations
+      elif select_all_choice == 3:
+        self.sql_select_all = self.sql_select_all_pilots
+      elif select_all_choice == 4:
+        self.sql_select_all = self.sql_select_all_flight_crew
+      elif select_all_choice == 5:
+        exit(0)
+      else:
+        print("Invalid Choice")
+
       self.get_connection()
+      self.conn.row_factory = sqlite3.Row
+      self.cur = self.conn.cursor()
       self.cur.execute(self.sql_select_all)
       result = self.cur.fetchall()
-
+      
+      if not result: 
+        print("No records found.")
+        return 
+            
+      print("\n" + "-"*50)
+      print(f"\n{' | '.join(result[0].keys())}")
+      for row in result:
+        print('    |    '.join(str(val) for val in row))
       # think how you could develop this method to show the records
 
     except Exception as e:
