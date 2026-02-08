@@ -1,6 +1,7 @@
 import sqlite3
-from SCHEMA import SCHEMA_SQL 
-from db_connection import DBConnection
+from .SCHEMA import SCHEMA_SQL 
+from .data_seed import fill_database_sql_script
+from .db_connection import DBConnection
 
 class DatabaseInitialiser: 
    #Create database and tables if they dont exist, also inserts example rows so you can use it straight out the box
@@ -11,6 +12,14 @@ class DatabaseInitialiser:
       cur = conn.cursor()
       cur.executescript(SCHEMA_SQL)
       conn.commit()
+      
+      #check if the tables are empty to prevent duplicate data insertion. 
+      cur.execute("Select count(*) FROM destinations")
+      count = cur.fetchone()[0]
+      if count ==0:
+        cur.executescript(fill_database_sql_script)
+        conn.commit()
+        
       print("\n" + "Database and tables initiated successfullly.")
     except Exception as e:
       print(e)

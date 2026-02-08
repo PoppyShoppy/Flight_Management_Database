@@ -1,31 +1,23 @@
-import sqlite3
+from tabulate import tabulate
 
 
-class DestinationInputLayer:
+class DestinationInputService:
 
     def __init__(self, db_operations):
         self.repo = db_operations
 
     def get_existing_destinations(self):
-        """Display existing destinations to help user input"""
+        ###Display existing destinations to help user input###
         try:
-            conn = sqlite3.connect(self.repo.db_name)
-            cur = conn.cursor()
-            cur.execute("SELECT destination_id, airport_iata_code, airport_name, city, country FROM destinations LIMIT 10")
-            results = cur.fetchall()
-            conn.close()
-            
+            results = self.repo.list_destinations()
             if results:
-                print("\nSample existing destinations:")
-                print("-" * 80)
-                for row in results:
-                    print(f"ID: {row[0]:<3} | IATA: {row[1]:<6} | Airport: {row[2]:<25} | City: {row[3]:<15} | Country: {row[4]}")
-                print("-" * 80)
+                print("\nExisting destinations:")
+                print(tabulate(results, headers=["ID", "IATA", "Airport", "City", "Country"], tablefmt="grid"))
         except Exception as e:
-            print(f"Could not display existing destinations: {e}")
+            print("Could not display existing destinations: " + str(e))
 
     def create_input_destination_data(self):
-        """Collect destination information from user input"""
+        ###Collect destination information from user input###
         try:
             self.get_existing_destinations()
             
@@ -34,7 +26,7 @@ class DestinationInputLayer:
                 print("IATA code must be exactly 3 characters.")
                 return
             
-            airport_name = input("Enter airport name (e.g., John F. Kennedy International): ").strip()
+            airport_name = input("Enter airport name (e.g., London Gatwick Airport): ").strip()
             if not airport_name:
                 print("Airport name cannot be empty.")
                 return
@@ -50,11 +42,11 @@ class DestinationInputLayer:
                 return
             
             # Confirm before inserting
-            print(f"\nConfirm destination details:")
-            print(f"  IATA Code: {iata}")
-            print(f"  Airport Name: {airport_name}")
-            print(f"  City: {city}")
-            print(f"  Country: {country}")
+            print("\nConfirm destination details:")
+            print("  IATA Code: " + str(iata))
+            print("  Airport Name: " + str(airport_name))
+            print("  City: " + str(city))
+            print("  Country: " + str(country))
             
             confirm = input("Is this correct? (yes/no): ").lower()
             if confirm != "yes" and confirm != "y":
@@ -62,8 +54,9 @@ class DestinationInputLayer:
                 return
             
             # Insert the destination
-            self.repo.insert_destination_data(iata, airport_name, city, country)
-            print("\nOperation Complete. Returning to main menu...")
+            inserted_id = self.repo.insert_destination_data(iata, airport_name, city, country)
+            print("\nInserted destination id: " + str(inserted_id))
+            print("Operation Complete. Returning to main menu...")
             
         except Exception as e:
-            print(f"Error: {e}")
+            print("Error: " + str(e))
