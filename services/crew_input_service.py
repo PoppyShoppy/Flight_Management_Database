@@ -9,7 +9,7 @@ class CrewInputService:
     def display_available_flights(self):
         ###Display available flights for user to choose from###
         try:
-            results = self.repo.list_flights(limit=15)
+            results = self.repo.list_flights()
             if results:
                 print("\nAvailable flights:")
                 print(tabulate(results, headers=["Flight ID", "Number", "Origin", "Destination", "Status"], tablefmt="grid"))
@@ -24,7 +24,7 @@ class CrewInputService:
     def display_available_pilots(self):
         ###Display available pilots for user to choose from###
         try:
-            results = self.repo.list_pilots(limit=15)
+            results = self.repo.list_pilots()
             if results:
                 print("\nAvailable pilots:")
                 print(tabulate(results, headers=["Pilot ID", "Employee ID", "First Name", "Last Name", "Rank"], tablefmt="grid"))

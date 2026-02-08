@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS flight_crew (
     pilot_id INTEGER NOT NULL,
     role VARCHAR(20) NOT NULL,
     is_flying_pilot BOOLEAN DEFAULT 0,
-    FOREIGN KEY (flight_id) REFERENCES flights(flight_id),
+    FOREIGN KEY (flight_id) REFERENCES flights(FlightID),
     FOREIGN KEY (pilot_id) REFERENCES pilots(pilot_id),
     UNIQUE(flight_id, pilot_id)
 );

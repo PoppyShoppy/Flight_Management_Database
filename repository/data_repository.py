@@ -174,7 +174,7 @@ class DBOperations:
 
   # --- Read-only / helper methods used by input layers ---
   def list_destinations(self):
-    ###Return list of destinations (rows) limited to `limit`.###
+    ###Return list of destinations.###
     try:
       conn = DBConnection.get_connection()
       cur = conn.cursor()
@@ -188,7 +188,7 @@ class DBOperations:
         pass
 
   def find_destination_by_city_or_iata(self, city_or_iata):
-    ###Return destination_id matching city LIKE or exact IATA (case-insensitive), or None.###
+    ###Return destination_id matching city LIKE or exact IATA also case-insensitive###
     try:
       conn = DBConnection.get_connection()
       cur = conn.cursor()
@@ -219,12 +219,12 @@ class DBOperations:
       except Exception:
         pass
 
-  def list_pilots(self, limit=10):
-    ###Return list of pilots limited to `limit`.###
+  def list_pilots(self):
+    ###Return list of pilots ###
     try:
       conn = DBConnection.get_connection()
       cur = conn.cursor()
-      cur.execute("SELECT pilot_id, employee_id, first_name, last_name, pilot_rank FROM pilots LIMIT ?", (limit,))
+      cur.execute("SELECT pilot_id, employee_id, first_name, last_name, pilot_rank FROM pilots")
       return cur.fetchall()
     finally:
       try:
@@ -256,7 +256,7 @@ class DBOperations:
     try:
       conn = DBConnection.get_connection()
       cur = conn.cursor()
-      cur.execute("SELECT 1 FROM flights WHERE flight_id = ?", (flight_id,))
+      cur.execute("SELECT 1 FROM flights WHERE FlightID = ?", (flight_id,))
       return cur.fetchone() is not None
     finally:
       try:
