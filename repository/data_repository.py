@@ -288,7 +288,7 @@ class DBOperations:
       except Exception:
         pass
 
-  def find_destination_by_city_or_iata(self, city_or_iata):
+  def find_destination_id_by_city_or_iata(self, city_or_iata):
     ###Return destination_id matching city LIKE or exact IATA also case-insensitive###
     try:
       conn = DBConnection.get_connection()

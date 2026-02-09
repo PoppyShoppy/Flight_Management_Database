@@ -6,9 +6,9 @@ class FlightInputService:
     def __init__(self, db_operations):  # This is a dependency injection which allows this code to pass database operations onto flights repository without having to create a object of the repository class here. 
         self.repo = db_operations
 
-    def find_destination_by_city_or_iata(self, city_or_iata):
+    def find_destination_id_by_city_or_iata(self, city_or_iata):
         ###Look up destination_id by city name or IATA code via repository.###
-        return self.repo.find_destination_by_city_or_iata(city_or_iata)
+        return self.repo.find_destination_id_by_city_or_iata(city_or_iata)
     
     def airport_name_and_city_by_id(self, destination_id):
         ###Look up airport name and city by destination_id via repository.###
@@ -17,7 +17,7 @@ class FlightInputService:
     def validate_destination_input(self): # Checking user input for destination/origin - loops until valid input
         while True:
             usr_input = input("Enter Flight Origin (City or IATA code): ")
-            dest_id = self.find_destination_by_city_or_iata(usr_input) # Need this function because its unreasonable to assume that user can find the city by entering destination_id
+            dest_id = self.find_destination_id_by_city_or_iata(usr_input) # Need this function because its unreasonable to assume that user can find the city by entering destination_id
             if dest_id is None:
                 print("Destination not found in destinations table.")
                 continue
@@ -60,14 +60,20 @@ class FlightInputService:
     # Asks for user input for flight data, some validation steps are taken where the user is asked to confirm the city as the destination id is stored in a digit. Flight status is also confirmed using numbered input by the user.
     def create_input_flight_data(self):
         flight = FlightInfo()
-       
-        flight.set_flight_number(input("Enter Flight Number: e.g. BB123 for Bonobo Airlines flight 123: "))
+
+        # Loop for valid flight number input
+        while True:
+            try:
+                flight_number_input = input("Enter Flight Number: e.g. BB123 for Bonobo Airlines flight 123: ")
+                flight.set_flight_number(flight_number_input)
+                break
+            except ValueError as e:
+                print("Error: " + str(e))
 
         flight.set_flight_origin(self.validate_destination_input())
-        
         flight.set_flight_destination(self.validate_destination_input())
 
-        # Get scheduled departure time with simple format
+        # Get the scheduled departure time
         while True:
             try:
                 departure_input = input("Enter Scheduled Departure (Format: YYYY-MM-DD HH:MM, e.g., 2026-02-15 14:30): ")
@@ -75,22 +81,26 @@ class FlightInputService:
                 break
             except ValueError as e:
                 print("Error: " + str(e))
-        
+
         flight.set_flight_status(self.status_menu_options())
 
-        # Confirm before inserting
+        # Confirm with user before inserting into database
         print("\nConfirm flight details:")
         print("  Flight Number: " + str(flight.flight_number))
         print("  Scheduled Departure: " + str(flight.scheduled_departure))
-        print("  Origin ID: " + str(flight.flightOrigin))
-        print("  Destination ID: " + str(flight.flightDestination))
+        print("  Origin ID: " + str(flight.flightOrigin) + " i.e. " + str(self.airport_name_and_city_by_id(flight.flightOrigin)))
+        print("  Destination ID: " + str(flight.flightDestination) + " i.e. " + str(self.airport_name_and_city_by_id(flight.flightDestination)))
         print("  Status: " + str(flight.status))
-            
-        confirm = input("Is this correct? (yes/no): ").lower()
-        if confirm != "yes" and confirm != "y":
-            print("Insertion cancelled.")
-            return
-        
+
+        while True:
+            confirm = input("Is this correct? (yes/no): ").strip().lower()
+            if confirm in ("yes", "y"):
+                break
+            if confirm in ("no", "n"):
+                print("Insertion cancelled.")
+                return
+            print("Please enter yes or no.")
+
         inserted_id = self.repo.insert_flight_data(flight)
         print(flight.__str__())
         print("\nData inserted successfully with FlightID: " + str(inserted_id))

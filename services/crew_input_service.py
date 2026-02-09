@@ -58,32 +58,34 @@ class CrewInputService:
             # Display available flights
             if not self.display_available_flights():
                 return
-            
+
             # Get flight ID
-            try:
-                flight_id = int(input("Enter Flight ID: ").strip())
-            except ValueError:
-                print("Invalid flight ID. Please enter a number.")
-                return
-            
-            if not self.validate_flight_exists(flight_id):
-                print("Flight ID " + str(flight_id) + " not found in database.")
-                return
+            while True:
+                try:
+                    flight_id = int(input("Enter Flight ID: ").strip())
+                except ValueError:
+                    print("Invalid flight ID. Please enter a number.")
+                    continue
+                if not self.validate_flight_exists(flight_id):
+                    print("Flight ID " + str(flight_id) + " not found in database.")
+                    continue
+                break
             
             # Display available pilots
             if not self.display_available_pilots():
                 return
-            
+
             # Get pilot ID
-            try:
-                pilot_id = int(input("Enter Pilot ID: ").strip())
-            except ValueError:
-                print("Invalid pilot ID. Please enter a number.")
-                return
-            
-            if not self.validate_pilot_exists(pilot_id):
-                print("Pilot ID " + str(pilot_id) + " not found in database.")
-                return
+            while True:
+                try:
+                    pilot_id = int(input("Enter Pilot ID: ").strip())
+                except ValueError:
+                    print("Invalid pilot ID. Please enter a number.")
+                    continue
+                if not self.validate_pilot_exists(pilot_id):
+                    print("Pilot ID " + str(pilot_id) + " not found in database.")
+                    continue
+                break
             
             # Get role
             while True:
@@ -105,7 +107,15 @@ class CrewInputService:
                     print("Error: " + str(e))
             
             # Get flying pilot status
-            is_flying = input("Is flying pilot? (yes/no): ").lower() in ("y", "yes")
+            while True:
+                is_flying_input = input("Is flying pilot? (yes/no): ").strip().lower()
+                if is_flying_input in ("y", "yes"):
+                    is_flying = True
+                    break
+                if is_flying_input in ("n", "no"):
+                    is_flying = False
+                    break
+                print("Please enter yes or no.")
             
             # Confirm before inserting
             print("\nConfirm flight crew details:")
@@ -114,10 +124,14 @@ class CrewInputService:
             print("  Role: " + str(role))
             print("  Flying Pilot: " + ("Yes" if is_flying else "No"))
             
-            confirm = input("Is this correct? (yes/no): ").lower()
-            if confirm != "yes" and confirm != "y":
-                print("Insertion cancelled.")
-                return
+            while True:
+                confirm = input("Is this correct? (yes/no): ").strip().lower()
+                if confirm in ("yes", "y"):
+                    break
+                if confirm in ("no", "n"):
+                    print("Insertion cancelled.")
+                    return
+                print("Please enter yes or no.")
             
             # Insert the flight crew
             inserted_id = self.repo.insert_flight_crew_data(flight_id, pilot_id, role, is_flying)

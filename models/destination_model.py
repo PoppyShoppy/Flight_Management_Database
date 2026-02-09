@@ -25,7 +25,7 @@ class DestinationInfo:
     if not code:
       raise ValueError("IATA code cannot be empty")
     code = code.strip().upper()
-    # Allow 3-character IATA (standard) or 4 (ICAO) codes if needed
+    # check for 3 character IATA or 4 character ICAO codes if needed
     if len(code) not in (3, 4) or not re.match(r'^[A-Z0-9]{3,4}$', code):
       raise ValueError("Invalid IATA/ICAO code format")
     self.airport_iata_code = code

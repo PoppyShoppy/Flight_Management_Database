@@ -20,26 +20,34 @@ class DestinationInputService:
         ###Collect destination information from user input###
         try:
             self.get_existing_destinations()
-            
-            iata = input("Enter airport IATA code (e.g., JFK): ").upper().strip()
-            if not iata or len(iata) != 3:
-                print("IATA code must be exactly 3 characters.")
-                return
-            
-            airport_name = input("Enter airport name (e.g., London Gatwick Airport): ").strip()
-            if not airport_name:
-                print("Airport name cannot be empty.")
-                return
-            
-            city = input("Enter city (e.g., New York): ").strip()
-            if not city:
-                print("City cannot be empty.")
-                return
-            
-            country = input("Enter country (e.g., United States): ").strip()
-            if not country:
-                print("Country cannot be empty.")
-                return
+
+            while True:
+                iata = input("Enter airport IATA code (e.g., JFK): ").upper().strip()
+                if not iata or len(iata) != 3:
+                    print("IATA code must be exactly 3 characters.")
+                    continue
+                break
+
+            while True:
+                airport_name = input("Enter airport name (e.g., London Gatwick Airport): ").strip()
+                if not airport_name:
+                    print("Airport name cannot be empty.")
+                    continue
+                break
+
+            while True:
+                city = input("Enter city (e.g., New York): ").strip()
+                if not city:
+                    print("City cannot be empty.")
+                    continue
+                break
+
+            while True:
+                country = input("Enter country (e.g., United States): ").strip()
+                if not country:
+                    print("Country cannot be empty.")
+                    continue
+                break
             
             # Confirm before inserting
             print("\nConfirm destination details:")
@@ -48,10 +56,14 @@ class DestinationInputService:
             print("  City: " + str(city))
             print("  Country: " + str(country))
             
-            confirm = input("Is this correct? (yes/no): ").lower()
-            if confirm != "yes" and confirm != "y":
-                print("Insertion cancelled.")
-                return
+            while True:
+                confirm = input("Is this correct? (yes/no): ").strip().lower()
+                if confirm in ("yes", "y"):
+                    break
+                if confirm in ("no", "n"):
+                    print("Insertion cancelled.")
+                    return
+                print("Please enter yes or no.")
             
             # Insert the destination
             inserted_id = self.repo.insert_destination_data(iata, airport_name, city, country)
