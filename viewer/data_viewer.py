@@ -1,6 +1,7 @@
 import sqlite3
 from tabulate import tabulate
 from db import DBConnection
+from repository.data_repository import DBOperations
 
 
 class DataViewer:
@@ -8,7 +9,7 @@ class DataViewer:
     
     # SQL queries for select operations (used by select_all and helper display methods)
     sql_select_all_flights = (
-        "SELECT f.FlightID, f.flight_number, f.Status, d1.airport_iata_code AS Origin, "
+        "SELECT f.FlightID, f.flight_number, f.scheduled_departure, f.Status, d1.airport_iata_code AS Origin, "
         "d2.airport_iata_code AS Destination "
         "FROM flights f "
         "JOIN destinations d1 ON f.flightOrigin = d1.destination_id "
@@ -19,11 +20,44 @@ class DataViewer:
     sql_select_all_flight_crew = "SELECT flight_crew_id, flight_id, pilot_id, role, is_flying_pilot FROM flight_crew"
 
     def __init__(self):
-        pass
+        self.db = DBOperations()
 
     def get_connection(self):
         conn = DBConnection.get_connection()
         return conn
+
+    # ==================== GENERIC DISPLAY HELPER ====================
+    
+    def _display_table(self, query, headers, headers_map=None, column_count=None):
+        """
+        Generic method to execute a query and display results in a formatted table.
+        
+        Args:
+            query: SQL query to execute
+            headers: List of column headers for display
+            headers_map: Optional function to map/transform row data
+            column_count: Number of columns expected (if headers_map is None, all rows used)
+        """
+        try:
+            conn = self.get_connection()
+            cur = conn.cursor()
+            cur.execute(query)
+            result = cur.fetchall()
+            if result:
+                if headers_map:
+                    rows = [headers_map(row) for row in result]
+                else:
+                    rows = [[row[i] for i in range(column_count)] for row in result]
+                print("\n" + tabulate(rows, headers=headers, tablefmt="grid"))
+            else:
+                print("No records found.")
+        except Exception as e:
+            print("Error displaying table: " + str(e))
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
     # Helper methods to show lists programmatically (used by update/delete convenience)
     def show_all_flights(self):
@@ -33,8 +67,8 @@ class DataViewer:
             cur.execute(self.sql_select_all_flights)
             result = cur.fetchall()
             if result:
-                rows = [[r[0], r[1], r[2], r[3], r[4]] for r in result]
-                print("\n" + tabulate(rows, headers=["Flight ID", "Number", "Status", "Origin", "Destination"], tablefmt="grid"))
+                rows = [[r[0], r[1], r[2], r[3], r[4], r[5]] for r in result]
+                print("\n" + tabulate(rows, headers=["Flight ID", "Number", "Departure", "Status", "Origin", "Destination"], tablefmt="grid"))
             else:
                 print("No flights found.")
         except Exception as e:
@@ -118,8 +152,8 @@ class DataViewer:
                 cur.execute(self.sql_select_all_flights)
                 result = cur.fetchall()
                 if result:
-                    rows = [[row[0], row[1], row[2], row[3], row[4]] for row in result]
-                    print("\n" + tabulate(rows, headers=["Flight ID", "Number", "Status", "Origin", "Destination"], tablefmt="grid"))
+                    rows = [[row[0], row[1], row[2], row[3], row[4], row[5]] for row in result]
+                    print("\n" + tabulate(rows, headers=["Flight ID", "Number", "Departure", "Status", "Origin", "Destination"], tablefmt="grid"))
                 else:
                     print("No records found.")
                     
@@ -169,9 +203,6 @@ class DataViewer:
     def search_data(self):
         ###Search for records across all tables.###
         try:
-            conn = self.get_connection()
-            cur = conn.cursor()
-            
             search_choice = int(input("\nSearch in which table?\n1. Flights\n2. Destinations\n3. Pilots\n4. Flight Crew\n5. Cancel\nEnter your choice: "))
             
             if search_choice == 1:
@@ -182,8 +213,7 @@ class DataViewer:
                     print("Please enter a valid number for Flight ID.")
                     return
                     
-                cur.execute("SELECT FlightID, flight_number, Status, flightOrigin, flightDestination FROM flights WHERE FlightID = ?", (flight_id,))
-                result = cur.fetchall()
+                result = self.db.search_flight_by_id(flight_id)
                 if result:
                     rows = [[row[0], row[1], row[2], row[3], row[4]] for row in result]
                     print("\n" + tabulate(rows, headers=["Flight ID", "Number", "Status", "Origin", "Destination"], tablefmt="grid"))
@@ -193,11 +223,7 @@ class DataViewer:
             elif search_choice == 2:
                 # Search Destinations
                 search_term = input("Enter city or IATA code to search: ").strip().upper()
-                cur.execute(
-                    "SELECT destination_id, airport_iata_code, airport_name, city, country FROM destinations WHERE city LIKE ? OR airport_iata_code LIKE ?",
-                    (f"%{search_term}%", f"%{search_term}%")
-                )
-                result = cur.fetchall()
+                result = self.db.search_destinations(search_term)
                 if result:
                     rows = [[row[0], row[1], row[2], row[3], row[4]] for row in result]
                     print("\n" + tabulate(rows, headers=["ID", "IATA", "Airport", "City", "Country"], tablefmt="grid"))
@@ -207,11 +233,7 @@ class DataViewer:
             elif search_choice == 3:
                 # Search Pilots
                 search_term = input("Enter pilot name or employee ID to search: ").strip().upper()
-                cur.execute(
-                    "SELECT pilot_id, employee_id, first_name, last_name, contact_number, license_number, pilot_rank FROM pilots WHERE first_name LIKE ? OR last_name LIKE ? OR employee_id LIKE ?",
-                    (f"%{search_term}%", f"%{search_term}%", f"%{search_term}%")
-                )
-                result = cur.fetchall()
+                result = self.db.search_pilots(search_term)
                 if result:
                     rows = [[row[0], row[1], row[2], row[3], row[4], row[5], row[6]] for row in result]
                     print("\n" + tabulate(rows, headers=["ID", "Employee", "First", "Last", "Contact", "License", "Rank"], tablefmt="grid"))
@@ -226,8 +248,7 @@ class DataViewer:
                     print("Please enter a valid number for Flight ID.")
                     return
                     
-                cur.execute("SELECT flight_crew_id, flight_id, pilot_id, role, is_flying_pilot FROM flight_crew WHERE flight_id = ?", (flight_id,))
-                result = cur.fetchall()
+                result = self.db.search_flight_crew(flight_id)
                 if result:
                     rows = [[row[0], row[1], row[2], row[3], "Yes" if row[4] else "No"] for row in result]
                     print("\n" + tabulate(rows, headers=["Crew ID", "Flight", "Pilot", "Role", "Flying"], tablefmt="grid"))
@@ -243,16 +264,10 @@ class DataViewer:
             print("Please enter a valid number.")
         except Exception as e:
             print("Error: " + str(e))
-        finally:
-            conn.close()
 
     def update_data(self):
         ###Update records in selected table.###
         try:
-            conn = self.get_connection()
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            
             update_choice = int(input("\nUpdate which table?\n1. Flights\n2. Destinations\n3. Pilots\n4. Flight Crew\n5. Cancel\nEnter your choice: "))
             
             if update_choice == 1:
@@ -268,8 +283,7 @@ class DataViewer:
                     except ValueError:
                         print("Please enter a valid number or 'x'.")
 
-                cur.execute("SELECT * FROM flights WHERE FlightID = ?", (flight_id,))
-                if not cur.fetchone():
+                if not self.db.flight_exists(flight_id):
                     print("Flight not found.")
                     return
                 
@@ -282,7 +296,7 @@ class DataViewer:
                 
                 if field_choice == 1:
                     new_value = input("Enter new flight number (e.g., BB123): ").upper()
-                    cur.execute("UPDATE flights SET flight_number = ? WHERE FlightID = ?", (new_value, flight_id))
+                    self.db.update_flight_number(flight_id, new_value)
                 elif field_choice == 2:
                     print("1. On Time\n2. Delayed\n3. Cancelled")
                     status_choice = int(input("Enter status: "))
@@ -291,18 +305,17 @@ class DataViewer:
                     if not new_value:
                         print("Invalid status.")
                         return
-                    cur.execute("UPDATE flights SET Status = ? WHERE FlightID = ?", (new_value, flight_id))
+                    self.db.update_flight_status(flight_id, new_value)
                 elif field_choice == 3:
                     new_value = int(input("Enter new origin destination_id: "))
-                    cur.execute("UPDATE flights SET flightOrigin = ? WHERE FlightID = ?", (new_value, flight_id))
+                    self.db.update_flight_origin(flight_id, new_value)
                 elif field_choice == 4:
                     new_value = int(input("Enter new destination destination_id: "))
-                    cur.execute("UPDATE flights SET flightDestination = ? WHERE FlightID = ?", (new_value, flight_id))
+                    self.db.update_flight_destination(flight_id, new_value)
                 else:
                     print("Invalid choice.")
                     return
                 
-                conn.commit()
                 print("Flight updated successfully.")
             
             elif update_choice == 2:
@@ -318,8 +331,7 @@ class DataViewer:
                     except ValueError:
                         print("Please enter a valid number or 'x'.")
 
-                cur.execute("SELECT * FROM destinations WHERE destination_id = ?", (dest_id,))
-                if not cur.fetchone():
+                if not self.db.destination_exists(dest_id):
                     print("Destination not found.")
                     return
                 
@@ -332,21 +344,20 @@ class DataViewer:
                 
                 if field_choice == 1:
                     new_value = input("Enter new IATA code: ").upper()
-                    cur.execute("UPDATE destinations SET airport_iata_code = ? WHERE destination_id = ?", (new_value, dest_id))
+                    self.db.update_destination_iata(dest_id, new_value)
                 elif field_choice == 2:
                     new_value = input("Enter new airport name: ")
-                    cur.execute("UPDATE destinations SET airport_name = ? WHERE destination_id = ?", (new_value, dest_id))
+                    self.db.update_destination_name(dest_id, new_value)
                 elif field_choice == 3:
                     new_value = input("Enter new city: ")
-                    cur.execute("UPDATE destinations SET city = ? WHERE destination_id = ?", (new_value, dest_id))
+                    self.db.update_destination_city(dest_id, new_value)
                 elif field_choice == 4:
                     new_value = input("Enter new country: ")
-                    cur.execute("UPDATE destinations SET country = ? WHERE destination_id = ?", (new_value, dest_id))
+                    self.db.update_destination_country(dest_id, new_value)
                 else:
                     print("Invalid choice.")
                     return
                 
-                conn.commit()
                 print("Destination updated successfully.")
             
             elif update_choice == 3:
@@ -362,8 +373,7 @@ class DataViewer:
                     except ValueError:
                         print("Please enter a valid number or 'x'.")
 
-                cur.execute("SELECT * FROM pilots WHERE pilot_id = ?", (pilot_id,))
-                if not cur.fetchone():
+                if not self.db.pilot_exists(pilot_id):
                     print("Pilot not found.")
                     return
                 
@@ -378,27 +388,26 @@ class DataViewer:
                 
                 if field_choice == 1:
                     new_value = input("Enter new employee ID: ")
-                    cur.execute("UPDATE pilots SET employee_id = ? WHERE pilot_id = ?", (new_value, pilot_id))
+                    self.db.update_pilot_employee_id(pilot_id, new_value)
                 elif field_choice == 2:
                     new_value = input("Enter new first name: ")
-                    cur.execute("UPDATE pilots SET first_name = ? WHERE pilot_id = ?", (new_value, pilot_id))
+                    self.db.update_pilot_first_name(pilot_id, new_value)
                 elif field_choice == 3:
                     new_value = input("Enter new last name: ")
-                    cur.execute("UPDATE pilots SET last_name = ? WHERE pilot_id = ?", (new_value, pilot_id))
+                    self.db.update_pilot_last_name(pilot_id, new_value)
                 elif field_choice == 4:
                     new_value = input("Enter new contact number: ")
-                    cur.execute("UPDATE pilots SET contact_number = ? WHERE pilot_id = ?", (new_value, pilot_id))
+                    self.db.update_pilot_contact(pilot_id, new_value)
                 elif field_choice == 5:
                     new_value = input("Enter new license number: ")
-                    cur.execute("UPDATE pilots SET license_number = ? WHERE pilot_id = ?", (new_value, pilot_id))
+                    self.db.update_pilot_license(pilot_id, new_value)
                 elif field_choice == 6:
                     new_value = input("Enter new pilot rank: ")
-                    cur.execute("UPDATE pilots SET pilot_rank = ? WHERE pilot_id = ?", (new_value, pilot_id))
+                    self.db.update_pilot_rank(pilot_id, new_value)
                 else:
                     print("Invalid choice.")
                     return
                 
-                conn.commit()
                 print("Pilot updated successfully.")
             
             elif update_choice == 4:
@@ -414,8 +423,7 @@ class DataViewer:
                     except ValueError:
                         print("Please enter a valid number or 'x'.")
 
-                cur.execute("SELECT * FROM flight_crew WHERE flight_crew_id = ?", (crew_id,))
-                if not cur.fetchone():
+                if not self.db.crew_exists(crew_id):
                     print("Flight Crew record not found.")
                     return
                 
@@ -426,15 +434,14 @@ class DataViewer:
                 
                 if field_choice == 1:
                     new_value = input("Enter new role (Captain/First Officer): ")
-                    cur.execute("UPDATE flight_crew SET role = ? WHERE flight_crew_id = ?", (new_value, crew_id))
+                    self.db.update_crew_role(crew_id, new_value)
                 elif field_choice == 2:
                     is_flying = input("Is flying pilot? (yes/no): ").lower() in ("y", "yes")
-                    cur.execute("UPDATE flight_crew SET is_flying_pilot = ? WHERE flight_crew_id = ?", (int(is_flying), crew_id))
+                    self.db.update_crew_flying_pilot(crew_id, int(is_flying))
                 else:
                     print("Invalid choice.")
                     return
                 
-                conn.commit()
                 print("Flight Crew record updated successfully.")
             
             elif update_choice == 5:
@@ -446,16 +453,10 @@ class DataViewer:
             print("Please enter a valid number.")
         except Exception as e:
             print("Error: " + str(e))
-        finally:
-            conn.close()
 
     def delete_data(self):
         ###Delete records from selected table.###
         try:
-            conn = self.get_connection()
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            
             delete_choice = int(input("\nDelete from which table?\n1. Flights\n2. Destinations\n3. Pilots\n4. Flight Crew\n5. Cancel\nEnter your choice: "))
             
             if delete_choice == 1:
@@ -471,15 +472,13 @@ class DataViewer:
                     except ValueError:
                         print("Please enter a valid number or 'x'.")
 
-                cur.execute("SELECT * FROM flights WHERE FlightID = ?", (flight_id,))
-                if not cur.fetchone():
+                if not self.db.flight_exists(flight_id):
                     print("Flight not found.")
                     return
 
                 confirm = input("Are you sure you want to delete flight " + str(flight_id) + "? (yes/no): ").lower()
                 if confirm in ("yes", "y"):
-                    cur.execute("DELETE FROM flights WHERE FlightID = ?", (flight_id,))
-                    conn.commit()
+                    self.db.delete_flight(flight_id)
                     print("Flight " + str(flight_id) + " deleted successfully.")
                 else:
                     print("Deletion cancelled.")
@@ -497,15 +496,13 @@ class DataViewer:
                     except ValueError:
                         print("Please enter a valid number or 'x'.")
 
-                cur.execute("SELECT * FROM destinations WHERE destination_id = ?", (dest_id,))
-                if not cur.fetchone():
+                if not self.db.destination_exists(dest_id):
                     print("Destination not found.")
                     return
 
                 confirm = input("Are you sure you want to delete destination " + str(dest_id) + "? (yes/no): ").lower()
                 if confirm in ("yes", "y"):
-                    cur.execute("DELETE FROM destinations WHERE destination_id = ?", (dest_id,))
-                    conn.commit()
+                    self.db.delete_destination(dest_id)
                     print("Destination " + str(dest_id) + " deleted successfully.")
                 else:
                     print("Deletion cancelled.")
@@ -523,15 +520,13 @@ class DataViewer:
                     except ValueError:
                         print("Please enter a valid number or 'x'.")
 
-                cur.execute("SELECT * FROM pilots WHERE pilot_id = ?", (pilot_id,))
-                if not cur.fetchone():
+                if not self.db.pilot_exists(pilot_id):
                     print("Pilot not found.")
                     return
 
                 confirm = input("Are you sure you want to delete pilot " + str(pilot_id) + "? (yes/no): ").lower()
                 if confirm in ("yes", "y"):
-                    cur.execute("DELETE FROM pilots WHERE pilot_id = ?", (pilot_id,))
-                    conn.commit()
+                    self.db.delete_pilot(pilot_id)
                     print("Pilot " + str(pilot_id) + " deleted successfully.")
                 else:
                     print("Deletion cancelled.")
@@ -549,15 +544,13 @@ class DataViewer:
                     except ValueError:
                         print("Please enter a valid number or 'x'.")
 
-                cur.execute("SELECT * FROM flight_crew WHERE flight_crew_id = ?", (crew_id,))
-                if not cur.fetchone():
+                if not self.db.crew_exists(crew_id):
                     print("Flight Crew record not found.")
                     return
 
                 confirm = input("Are you sure you want to delete crew record " + str(crew_id) + "? (yes/no): ").lower()
                 if confirm in ("yes", "y"):
-                    cur.execute("DELETE FROM flight_crew WHERE flight_crew_id = ?", (crew_id,))
-                    conn.commit()
+                    self.db.delete_flight_crew(crew_id)
                     print("Flight Crew record " + str(crew_id) + " deleted successfully.")
                 else:
                     print("Deletion cancelled.")
@@ -571,5 +564,3 @@ class DataViewer:
             print("Please enter a valid number.")
         except Exception as e:
             print("Error: " + str(e))
-        finally:
-            conn.close()

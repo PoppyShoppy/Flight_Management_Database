@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS pilots (
 CREATE TABLE IF NOT EXISTS flights (
     FlightID INTEGER PRIMARY KEY AUTOINCREMENT,
     flight_number VARCHAR(10) NOT NULL,
+    scheduled_departure DATETIME NOT NULL,
     Status VARCHAR(15),
     flightOrigin INTEGER,
     flightDestination INTEGER,

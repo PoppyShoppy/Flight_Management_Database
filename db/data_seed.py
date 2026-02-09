@@ -35,22 +35,22 @@ INSERT INTO pilots (employee_id, first_name, last_name, contact_number, license_
 ('EMP014', 'Patricia', 'Thompson', '555-0114', 'LIC001014', 'First Officer'),
 ('EMP015', 'Daniel', 'Garcia', '555-0115', 'LIC001015', 'Captain');
 
-INSERT INTO flights (flight_number, Status, flightOrigin, flightDestination) VALUES
-('AA100', 'Completed', 1, 2),
-('BA201', 'Completed', 2, 1),
-('AF302', 'Scheduled', 3, 5),
-('KL403', 'Scheduled', 4, 3),
-('LH504', 'Boarding', 5, 4),
-('AZ605', 'Delayed', 8, 9),
-('EI706', 'Scheduled', 7, 2),
-('IB807', 'Scheduled', 9, 10),
-('VY908', 'Scheduled', 10, 9),
-('SR009', 'Scheduled', 11, 12),
-('OS110', 'Scheduled', 12, 11),
-('DL211', 'Scheduled', 1, 13),
-('UA312', 'Scheduled', 14, 15),
-('AM413', 'Scheduled', 15, 13),
-('AC514', 'Scheduled', 2, 1);
+INSERT INTO flights (flight_number, scheduled_departure, Status, flightOrigin, flightDestination) VALUES
+('AA100', '2026-02-10 08:00', 'Completed', 1, 2),
+('BA201', '2026-02-10 10:30', 'Completed', 2, 1),
+('AF302', '2026-02-11 12:15', 'Scheduled', 3, 5),
+('KL403', '2026-02-11 14:45', 'Scheduled', 4, 3),
+('LH504', '2026-02-12 09:00', 'Boarding', 5, 4),
+('AZ605', '2026-02-12 11:30', 'Delayed', 8, 9),
+('EI706', '2026-02-13 15:00', 'Scheduled', 7, 2),
+('IB807', '2026-02-13 16:45', 'Scheduled', 9, 10),
+('VY908', '2026-02-14 07:30', 'Scheduled', 10, 9),
+('SR009', '2026-02-14 13:00', 'Scheduled', 11, 12),
+('OS110', '2026-02-14 17:15', 'Scheduled', 12, 11),
+('DL211', '2026-02-15 06:45', 'Scheduled', 1, 13),
+('UA312', '2026-02-15 11:00', 'Scheduled', 14, 15),
+('AM413', '2026-02-15 18:30', 'Scheduled', 15, 13),
+('AC514', '2026-02-16 09:45', 'Scheduled', 2, 1);
 
 -- Assign pilots to flights (2 pilots per flight)
 INSERT INTO flight_crew (flight_id, pilot_id, role, is_flying_pilot) VALUES

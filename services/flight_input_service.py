@@ -66,12 +66,22 @@ class FlightInputService:
         flight.set_flight_origin(self.validate_destination_input())
         
         flight.set_flight_destination(self.validate_destination_input())
+
+        # Get scheduled departure time with simple format
+        while True:
+            try:
+                departure_input = input("Enter Scheduled Departure (Format: YYYY-MM-DD HH:MM, e.g., 2026-02-15 14:30): ")
+                flight.set_scheduled_departure(departure_input)
+                break
+            except ValueError as e:
+                print("Error: " + str(e))
         
         flight.set_flight_status(self.status_menu_options())
 
         # Confirm before inserting
         print("\nConfirm flight details:")
         print("  Flight Number: " + str(flight.flight_number))
+        print("  Scheduled Departure: " + str(flight.scheduled_departure))
         print("  Origin ID: " + str(flight.flightOrigin))
         print("  Destination ID: " + str(flight.flightDestination))
         print("  Status: " + str(flight.status))

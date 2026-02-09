@@ -4,13 +4,12 @@ DROP TABLE IF EXISTS flights;
 DROP TABLE IF EXISTS pilots;
 DROP TABLE IF EXISTS destinations;
 
-
 -- Destinations (airports) table
- CREATE TABLE IF NOT EXISTS destinations (
+CREATE TABLE IF NOT EXISTS destinations (
     destination_id INTEGER PRIMARY KEY AUTOINCREMENT, -- unique identifier for each destination, using int for simplicity, auto-incrementing and efficient indexing, storage and performance benefits, and easy to reference in other tables as foreign keys
-    airport_iata_code VARCHAR(3) UNIQUE NOT NULL,  --e.g., 'JFK', 'LAX', candidate key for airports, unique and standardized, allows for efficient lookups and joins, and is widely used in the aviation industry
+    airport_iata_code VARCHAR(3) UNIQUE NOT NULL,  -- e.g., 'JFK', 'LAX', candidate key for airports, unique and standardized, allows for efficient lookups and joins, and is widely used in the aviation industry
     airport_name VARCHAR(100), -- e.g., 'John F Kennedy International', provides descriptive information about the airport, useful for display and reporting purposes
-    city VARCHAR(50), -- can city and country become 
+    city VARCHAR(50), 
     country VARCHAR(50)
 );
 
@@ -25,41 +24,32 @@ CREATE TABLE IF NOT EXISTS pilots (
     pilot_rank VARCHAR(20)    
 );
 
-SELECT   f.FlightID, 
-f.flight_number, d1.airport_iata_code AS Origin, d2.airport_iata_code AS Destination, f.Status FROM flights f JOIN destinations d1 ON f.flightOrigin = d1.destination_id JOIN destinations d2 ON f.flightDestination = d2.destination_id;
-
-select flight_number, status, flightOrigin AS ORIGIN, flightDestination AS DESTINATION from flights JOIN destinations ON flights.flightOrigin = destinations.destination_id where ; 
-
 -- Flights table
 CREATE TABLE IF NOT EXISTS flights (
     FlightID INTEGER PRIMARY KEY AUTOINCREMENT, -- identifies a specific flight instance
     flight_number VARCHAR(10) NOT NULL,  -- e.g., 'AA123'
-    Status VARCHAR(15), -- e.g., 'Scheduled', 'Delayed', 'Cancelled', 'Completed', 'Boarding'
+    scheduled_departure DATETIME NOT NULL,          -- the date and time of the flight, important for scheduling and historical records
+    Status VARCHAR(15),                  -- e.g., 'Scheduled', 'Delayed', 'Cancelled', 'Completed', 'Boarding'
     -- Foreign keys
-    flightOrigin INTEGER,  -- Where the flight starts
-    flightDestination INTEGER,  -- Where the flight ends
+    flightOrigin INTEGER,               -- Where the flight starts
+    flightDestination INTEGER,          -- Where the flight ends
     
     FOREIGN KEY (flightOrigin) REFERENCES destinations(destination_id),
     FOREIGN KEY (flightDestination) REFERENCES destinations(destination_id)
-
 );
---Advantages: Scalable to any number of pilots, Clear role assignment, Easy to query by role, Maintains referential integrity. Having two separate foreign keys in the flights table works but creates issues:
---Not scalable (what if you need 3+ crew members later?)
---Violates normalization principles (repeating attributes)
---Hard to enforce uniqueness (ensuring it's not the same pilot twice)
 
-
+-- Flight Crew table
+-- Advantages: Scalable to any number of pilots, Clear role assignment, Easy to query by role, Maintains referential integrity. 
 CREATE TABLE IF NOT EXISTS flight_crew (
     flight_crew_id INTEGER PRIMARY KEY AUTOINCREMENT,
     flight_id INTEGER NOT NULL,
     pilot_id INTEGER NOT NULL,
     role VARCHAR(20) NOT NULL,  -- 'Captain', 'First Officer'
-    is_flying_pilot BOOLEAN DEFAULT 0, --indicate if this pilot is the flying pilot/captain.
-    FOREIGN KEY (flight_id) REFERENCES flights(flight_id),
+    is_flying_pilot BOOLEAN DEFAULT 0, -- indicate if this pilot is the flying pilot/captain.
+    FOREIGN KEY (flight_id) REFERENCES flights(FlightID), -- Linked to FlightID to match schema_sql.py
     FOREIGN KEY (pilot_id) REFERENCES pilots(pilot_id),
-    UNIQUE(flight_id, pilot_id)  -- Prevents same pilot twice
+    UNIQUE(flight_id, pilot_id)  -- Prevents same pilot twice on the same flight
 );
-
 
 
 
@@ -99,59 +89,29 @@ INSERT INTO pilots (employee_id, first_name, last_name, contact_number, license_
 ('EMP014', 'Patricia', 'Thompson', '555-0114', 'LIC001014', 'First Officer'),
 ('EMP015', 'Daniel', 'Garcia', '555-0115', 'LIC001015', 'Captain');
 
-INSERT INTO flights (flight_number, Status, flightOrigin, flightDestination) VALUES
-('AA100', 'Completed', 1, 2),
-('BA201', 'Completed', 2, 1),
-('AF302', 'Scheduled', 3, 5),
-('KL403', 'Scheduled', 4, 3),
-('LH504', 'Boarding', 5, 4),
-('AZ605', 'Delayed', 8, 9),
-('EI706', 'Scheduled', 7, 2),
-('IB807', 'Scheduled', 9, 10),
-('VY908', 'Scheduled', 10, 9),
-('SR009', 'Scheduled', 11, 12),
-('OS110', 'Scheduled', 12, 11),
-('DL211', 'Scheduled', 1, 13),
-('UA312', 'Scheduled', 14, 15),
-('AM413', 'Scheduled', 15, 13),
-('AC514', 'Scheduled', 2, 1);
+-- Insert flights (Added '2024-05-20' as the date for all initial records)
+INSERT INTO flights (flight_number, flight_date, Status, flightOrigin, flightDestination) VALUES
+('AA100', '2024-05-20', 'Completed', 1, 2),
+('BA201', '2024-05-20', 'Completed', 2, 1),
+('AF302', '2024-05-20', 'Scheduled', 3, 5),
+('KL403', '2024-05-20', 'Scheduled', 4, 3),
+('LH504', '2024-05-20', 'Boarding', 5, 4),
+('AZ605', '2024-05-20', 'Delayed', 8, 9),
+('EI706', '2024-05-20', 'Scheduled', 7, 2),
+('IB807', '2024-05-20', 'Scheduled', 9, 10),
+('VY908', '2024-05-20', 'Scheduled', 10, 9),
+('SR009', '2024-05-20', 'Scheduled', 11, 12),
+('OS110', '2024-05-20', 'Scheduled', 12, 11),
+('DL211', '2024-05-20', 'Scheduled', 1, 13),
+('UA312', '2024-05-20', 'Scheduled', 14, 15),
+('AM413', '2024-05-20', 'Scheduled', 15, 13),
+('AC514', '2024-05-20', 'Scheduled', 2, 1);
 
--- Assign pilots to flights (2 pilots per flight)
+-- Assign pilots to flights
 INSERT INTO flight_crew (flight_id, pilot_id, role, is_flying_pilot) VALUES
 (1, 1, 'Captain', 1),
 (1, 2, 'First Officer', 0),
 (2, 3, 'Captain', 1),
 (2, 4, 'First Officer', 0),
 (3, 5, 'Captain', 1),
-(3, 6, 'First Officer', 0),
-(4, 7, 'Captain', 1),
-(4, 8, 'First Officer', 0),
-(5, 9, 'Captain', 1),
-(5, 10, 'First Officer', 0),
-(6, 11, 'Captain', 1),
-(6, 12, 'First Officer', 0),
-(7, 13, 'Captain', 1),
-(7, 14, 'First Officer', 0),
-(8, 15, 'Captain', 1),
-(8, 1, 'First Officer', 0),
-(9, 2, 'Captain', 1),
-(9, 3, 'First Officer', 0),
-(10, 4, 'Captain', 1),
-(10, 5, 'First Officer', 0),
-(11, 6, 'Captain', 1),
-(11, 7, 'First Officer', 0),
-(12, 8, 'Captain', 1),
-(12, 9, 'First Officer', 0),
-(13, 10, 'Captain', 1),
-(13, 11, 'First Officer', 0),
-(14, 12, 'Captain', 1),
-(14, 13, 'First Officer', 0),
-(15, 14, 'Captain', 1),
-(15, 15, 'First Officer', 0);
-
-
-SELECT * FROM destinations;
-select * from pilots;
-select * from flights;
-select * from flight_crew;
-
+(3, 6, 'First Officer', 0);
