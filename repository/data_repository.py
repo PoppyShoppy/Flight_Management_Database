@@ -26,6 +26,7 @@ class DBOperations:
   sql_find_destination_by_city_or_iata = "SELECT destination_id FROM destinations WHERE city LIKE ? OR airport_iata_code = ?"
   sql_get_airport_info = "SELECT airport_name, city FROM destinations WHERE destination_id = ?"
   sql_list_pilots = "SELECT pilot_id, employee_id, first_name, last_name, pilot_rank FROM pilots"
+  sql_get_pilot_rank_by_id = "SELECT pilot_rank FROM pilots WHERE pilot_id = ?"
   sql_list_flights = "SELECT flights.FlightID, flights.flight_number, d1.airport_iata_code AS origin, d2.airport_iata_code AS destination, flights.Status FROM flights " \
   "JOIN destinations d1 ON flights.flightOrigin = d1.destination_id JOIN destinations d2 ON flights.flightDestination = d2.destination_id"
   
@@ -316,6 +317,20 @@ class DBOperations:
       except Exception:
         pass
 
+  def get_pilot_rank_by_id(self, pilot_id):
+    ###Return pilot rank by pilot_id or None.###
+    try:
+      conn = DBConnection.get_connection()
+      cur = conn.cursor()
+      cur.execute(self.sql_get_pilot_rank_by_id, (pilot_id,))
+      row = cur.fetchone()
+      return row[0] if row else None
+    finally:
+      try:
+        conn.close()
+      except Exception:
+        pass
+      
   def list_pilots(self):
     ###Return list of pilots ###
     try:

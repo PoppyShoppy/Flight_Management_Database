@@ -59,7 +59,8 @@ class CrewInputService:
             if not self.display_available_flights():
                 return
 
-            # Get flight ID
+            # Get flight ID. I have purposefully not added a guard to check if the flightID is marked complete for retroactive data updates
+            # and reduce input friction in other cases as well for example adding 3 pilots.
             while True:
                 try:
                     flight_id = int(input("Enter Flight ID: ").strip())
@@ -70,7 +71,7 @@ class CrewInputService:
                     print("Flight ID " + str(flight_id) + " not found in database.")
                     continue
                 break
-            
+
             # Display available pilots
             if not self.display_available_pilots():
                 return
@@ -86,26 +87,10 @@ class CrewInputService:
                     print("Pilot ID " + str(pilot_id) + " not found in database.")
                     continue
                 break
-            
-            # Get role
-            while True:
-                print("Role options:")
-                print("1. Captain")
-                print("2. First Officer")
-                try:
-                    role_choice = input("Select role (1-2): ").strip()
-                    role_mapping = {
-                        "1": "Captain",
-                        "2": "First Officer"
-                    }
-                    role = role_mapping.get(role_choice)
-                    if not role:
-                        print("Invalid role selection. Please enter 1 or 2.")
-                        continue
-                    break
-                except Exception as e:
-                    print("Error: " + str(e))
-            
+
+            # Get role automatically by pilot rank
+            role = self.repo.get_pilot_rank_by_id(pilot_id)
+
             # Get flying pilot status
             while True:
                 is_flying_input = input("Is flying pilot? (yes/no): ").strip().lower()
@@ -116,14 +101,14 @@ class CrewInputService:
                     is_flying = False
                     break
                 print("Please enter yes or no.")
-            
+
             # Confirm before inserting
             print("\nConfirm flight crew details:")
             print("  Flight ID: " + str(flight_id))
             print("  Pilot ID: " + str(pilot_id))
             print("  Role: " + str(role))
             print("  Flying Pilot: " + ("Yes" if is_flying else "No"))
-            
+
             while True:
                 confirm = input("Is this correct? (yes/no): ").strip().lower()
                 if confirm in ("yes", "y"):
@@ -132,11 +117,11 @@ class CrewInputService:
                     print("Insertion cancelled.")
                     return
                 print("Please enter yes or no.")
-            
+
             # Insert the flight crew
             inserted_id = self.repo.insert_flight_crew_data(flight_id, pilot_id, role, is_flying)
             print("\nInserted flight_crew id: " + str(inserted_id))
             print("Operation Complete. Returning to main menu...")
-            
+
         except Exception as e:
             print("Error: " + str(e))

@@ -44,9 +44,9 @@ CREATE TABLE IF NOT EXISTS flight_crew (
     flight_crew_id INTEGER PRIMARY KEY AUTOINCREMENT,
     flight_id INTEGER NOT NULL,
     pilot_id INTEGER NOT NULL,
-    role VARCHAR(20) NOT NULL,  -- 'Captain', 'First Officer'
+    role VARCHAR(20) NOT NULL,  -- 'Captain', 'First Officer', not making this a fk allows for flexiblity of new roles
     is_flying_pilot BOOLEAN DEFAULT 0, -- indicate if this pilot is the flying pilot/captain.
-    FOREIGN KEY (flight_id) REFERENCES flights(FlightID), -- Linked to FlightID to match schema_sql.py
+    FOREIGN KEY (flight_id) REFERENCES flights(FlightID), -- 
     FOREIGN KEY (pilot_id) REFERENCES pilots(pilot_id),
     UNIQUE(flight_id, pilot_id)  -- Prevents same pilot twice on the same flight
 );
