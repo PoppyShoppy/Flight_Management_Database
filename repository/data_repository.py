@@ -73,17 +73,17 @@ class DBOperations:
   sql_create_destinations = """CREATE TABLE IF NOT EXISTS destinations (
     destination_id INTEGER PRIMARY KEY AUTOINCREMENT,
     airport_iata_code VARCHAR(3) UNIQUE NOT NULL,
-    airport_name VARCHAR(100),
+    airport_name VARCHAR(255),
     city VARCHAR(50),
     country VARCHAR(50)
   )"""
   sql_create_pilots = """CREATE TABLE IF NOT EXISTS pilots (
     pilot_id INTEGER PRIMARY KEY AUTOINCREMENT,
     employee_id VARCHAR(20) UNIQUE NOT NULL,
-    first_name VARCHAR(30),
-    last_name VARCHAR(30),
-    contact_number VARCHAR(20),
-    license_number VARCHAR(15),
+    first_name VARCHAR(30) NOT NULL,
+    last_name VARCHAR(30) NOT NULL,
+    contact_number VARCHAR(20) UNIQUE NOT NULL,
+    license_number VARCHAR(15) UNIQUE NOT NULL,
     pilot_rank VARCHAR(20)
   )"""
   sql_create_flights = """CREATE TABLE IF NOT EXISTS flights (
@@ -91,10 +91,11 @@ class DBOperations:
     flight_number VARCHAR(10) NOT NULL,
     scheduled_departure DATETIME NOT NULL,
     Status VARCHAR(15),
-    flightOrigin INTEGER,
-    flightDestination INTEGER,
+    flightOrigin INTEGER NOT NULL,
+    flightDestination INTEGER NOT NULL,
     FOREIGN KEY (flightOrigin) REFERENCES destinations(destination_id),
-    FOREIGN KEY (flightDestination) REFERENCES destinations(destination_id)
+    FOREIGN KEY (flightDestination) REFERENCES destinations(destination_id),
+    CHECK (flightOrigin <> flightDestination)
   )"""
   sql_create_flight_crew = """CREATE TABLE IF NOT EXISTS flight_crew (
     flight_crew_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -103,7 +104,7 @@ class DBOperations:
     role VARCHAR(20) NOT NULL,
     is_flying_pilot BOOLEAN DEFAULT 0,
     FOREIGN KEY (flight_id) REFERENCES flights(FlightID),
-    FOREIGN KEY (pilot_id) REFERENCES pilots(pilot_id),
+    FOREIGN KEY (pilot_id) REFERENCES pilots(pilot_id) ON DELETE CASCADE,
     UNIQUE(flight_id, pilot_id)
   )"""
   
@@ -113,8 +114,6 @@ class DBOperations:
   sql_delete_data = ""
   sql_drop_table = ""
 
-  def __init__(self):
-    self.db_name = DBConnection.DB_NAME
 
   def get_connection(self):
       conn = DBConnection.get_connection()
@@ -129,40 +128,25 @@ class DBOperations:
   def _execute_query(self, query, params):
     """Generic method to execute a query and commit."""
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(query, params)
-      conn.commit()
+      self.get_connection()
+      self.cur.execute(query, params)
+      self.conn.commit()
       return True
-    finally:
+    finally: # ensuring connection is closed even if an error occurs
       try:
-        conn.close()
-      except Exception:
-        pass
-
-  def _fetch_query(self, query, params):
-    """Generic method to execute a query and fetch results."""
-    try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(query, params)
-      return cur.fetchall()
-    finally:
-      try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
   def _fetch_one(self, query, params):
     """Generic method to execute a query and fetch one result."""
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(query, params)
-      return cur.fetchone() is not None
-    finally:
+      self.get_connection()
+      self.cur.execute(query, params)
+      return self.cur.fetchone() is not None
+    finally: # ensuring connection is closed even if an error occurs
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
@@ -220,7 +204,7 @@ class DBOperations:
       self.get_connection()
       self.cur.execute(
         self.sql_insert_flights,
-        (
+        ( ### using the getter methods from the flight model to retrieve the data to insert into the database.
           flight.get_flight_number(),
           flight.get_scheduled_departure(),
           flight.get_status(),
@@ -278,158 +262,146 @@ class DBOperations:
   def list_destinations(self):
     ###Return list of destinations.###
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_list_destinations)
-      results = cur.fetchall()
+      self.get_connection()
+      self.cur.execute(self.sql_list_destinations)
+      results = self.cur.fetchall()
       return results
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
   def find_destination_id_by_city_or_iata(self, city_or_iata):
     ###Return destination_id matching city LIKE or exact IATA also case-insensitive###
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_find_destination_by_city_or_iata, (f"%{city_or_iata}%", city_or_iata.upper()))
-      row = cur.fetchone()
+      self.get_connection()
+      self.cur.execute(self.sql_find_destination_by_city_or_iata, (f"%{city_or_iata}%", city_or_iata.upper()))
+      row = self.cur.fetchone()
       return row[0] if row else None
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
   def get_airport_info_by_id(self, destination_id):
     ###Return (airport_name, city) or None.###
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_get_airport_info, (destination_id,))
-      row = cur.fetchone()
+      self.get_connection()
+      self.cur.execute(self.sql_get_airport_info, (destination_id,))
+      row = self.cur.fetchone()
       return (row[0], row[1]) if row else None
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
   def get_pilot_rank_by_id(self, pilot_id):
     ###Return pilot rank by pilot_id or None.###
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_get_pilot_rank_by_id, (pilot_id,))
-      row = cur.fetchone()
+      self.get_connection()
+      self.cur.execute(self.sql_get_pilot_rank_by_id, (pilot_id,))
+      row = self.cur.fetchone()
       return row[0] if row else None
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
       
   def list_pilots(self):
     ###Return list of pilots ###
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_list_pilots)
-      return cur.fetchall()
+      self.get_connection()
+      self.cur.execute(self.sql_list_pilots)
+      return self.cur.fetchall()
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
   def list_flights(self):
     ###Return a list of flights with origin/destination IATA codes for display.###
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_list_flights)
-      return cur.fetchall()
+      self.get_connection()
+      self.cur.execute(self.sql_list_flights)
+      return self.cur.fetchall()
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
   def validate_flight_exists(self, flight_id):
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_validate_flight_exists, (flight_id,))
-      return cur.fetchone() is not None
+      self.get_connection()
+      self.cur.execute(self.sql_validate_flight_exists, (flight_id,))
+      return self.cur.fetchone() is not None
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
   def validate_pilot_exists(self, pilot_id):
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_validate_pilot_exists, (pilot_id,))
-      return cur.fetchone() is not None
+      self.get_connection()
+      self.cur.execute(self.sql_validate_pilot_exists, (pilot_id,))
+      return self.cur.fetchone() is not None
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
   def search_flight_by_id(self, flight_id):
     """Search for a single flight by ID."""
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_search_flight_by_id, (flight_id,))
-      return cur.fetchall()
+      self.get_connection()
+      self.cur.execute(self.sql_search_flight_by_id, (flight_id,))
+      return self.cur.fetchall()
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
   def search_destinations(self, search_term):
     """Search destinations by city or IATA code."""
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_search_destinations, (f"%{search_term}%", f"%{search_term}%"))
-      return cur.fetchall()
+      self.get_connection()
+      self.cur.execute(self.sql_search_destinations, (f"%{search_term}%", f"%{search_term}%"))
+      return self.cur.fetchall()
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
   def search_pilots(self, search_term):
     """Search pilots by name or employee ID."""
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_search_pilots, (f"%{search_term}%", f"%{search_term}%", f"%{search_term}%"))
-      return cur.fetchall()
+      self.get_connection()
+      self.cur.execute(self.sql_search_pilots, (f"%{search_term}%", f"%{search_term}%", f"%{search_term}%"))
+      return self.cur.fetchall()
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
   def search_flight_crew(self, flight_id):
     """Search flight crew by flight ID."""
     try:
-      conn = DBConnection.get_connection()
-      cur = conn.cursor()
-      cur.execute(self.sql_search_flight_crew, (flight_id,))
-      return cur.fetchall()
+      self.get_connection()
+      self.cur.execute(self.sql_search_flight_crew, (flight_id,))
+      return self.cur.fetchall()
     finally:
       try:
-        conn.close()
+        self.conn.close()
       except Exception:
         pass
 
