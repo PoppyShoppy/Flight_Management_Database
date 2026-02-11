@@ -13,7 +13,7 @@ class DBOperations:
   sql_insert_flight_crew = "INSERT INTO flight_crew (flight_id, pilot_id, role, is_flying_pilot) VALUES (?, ?, ?, ?)"
   
   # ==================== SELECT STATEMENTS ========================================================================================================================
-  # Note: Aliases d1/d2/f used to avoid confusion when referencing same table twice
+  # Used dot notation aliases d1/d2/f  to avoid confusion when referencing same table twice
   sql_select_all_flights = "SELECT f.flight_number, d1.airport_iata_code AS Origin, d2.airport_iata_code AS Destination, f.Status FROM flights f " \
   "JOIN destinations d1 ON f.flightOrigin = d1.destination_id JOIN destinations d2 ON f.flightDestination = d2.destination_id;"
   
