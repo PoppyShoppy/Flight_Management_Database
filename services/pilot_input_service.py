@@ -57,6 +57,7 @@ class PilotInputService:
                 break
             
             while True:
+                # Rank menu: map numeric choice to pilot rank.
                 print("Pilot rank options:")
                 print("1. Captain")
                 print("2. First Officer")

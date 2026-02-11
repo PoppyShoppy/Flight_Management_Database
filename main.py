@@ -17,6 +17,7 @@ def is_db_initialized():
 # The user will select a choice from the menu to interact with the database.
 
 while True:
+  # Main menu: pick a top-level action for the CLI app.
   print("\n Menu:")
   print("**********")
   print(" 1. Create tables and populate database with sample data")
@@ -41,6 +42,7 @@ while True:
       print("Database not initialized. Please select option 1 first.")
       continue
     try:
+      # Insert menu: choose which entity to create.
       insert_choice = int(input("\nWhat would you like to insert?\n1. Flight\n2. Destination\n3. Pilot\n4. Flight Crew\n5. Back to Menu\nEnter your choice: "))
       if insert_choice == 1:
         flight_input = FlightInputService(db_ops)

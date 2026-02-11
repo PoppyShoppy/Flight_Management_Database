@@ -36,6 +36,7 @@ class FlightInputService:
                 print("Please try again with a different city or IATA code. or check the destinations table for valid entries.")
     
     def status_menu_options(self):
+        # Status menu: map numeric choice to a valid status string.
         print("Flight Status Options:")
         print("1. On Time")
         print("2. Delayed")
