@@ -408,67 +408,51 @@ class DBOperations:
   # ==================== UPDATE METHODS ====================
   
   def update_flight_number(self, flight_id, new_value):
-    """Update flight number."""
     return self._execute_query(self.sql_update_flight_number, (new_value, flight_id))
 
   def update_flight_status(self, flight_id, new_value):
-    """Update flight status."""
     return self._execute_query(self.sql_update_flight_status, (new_value, flight_id))
 
   def update_flight_origin(self, flight_id, new_value):
-    """Update flight origin."""
     return self._execute_query(self.sql_update_flight_origin, (new_value, flight_id))
 
   def update_flight_destination(self, flight_id, new_value):
-    """Update flight destination."""
     return self._execute_query(self.sql_update_flight_destination, (new_value, flight_id))
 
   def update_destination_iata(self, dest_id, new_value):
-    """Update destination IATA code."""
     return self._execute_query(self.sql_update_destination_iata, (new_value, dest_id))
 
   def update_destination_name(self, dest_id, new_value):
-    """Update destination airport name."""
     return self._execute_query(self.sql_update_destination_name, (new_value, dest_id))
 
   def update_destination_city(self, dest_id, new_value):
-    """Update destination city."""
     return self._execute_query(self.sql_update_destination_city, (new_value, dest_id))
 
   def update_destination_country(self, dest_id, new_value):
-    """Update destination country."""
     return self._execute_query(self.sql_update_destination_country, (new_value, dest_id))
 
   def update_pilot_employee_id(self, pilot_id, new_value):
-    """Update pilot employee ID."""
     return self._execute_query(self.sql_update_pilot_employee_id, (new_value, pilot_id))
 
   def update_pilot_first_name(self, pilot_id, new_value):
-    """Update pilot first name."""
     return self._execute_query(self.sql_update_pilot_first_name, (new_value, pilot_id))
 
   def update_pilot_last_name(self, pilot_id, new_value):
-    """Update pilot last name."""
     return self._execute_query(self.sql_update_pilot_last_name, (new_value, pilot_id))
 
   def update_pilot_contact(self, pilot_id, new_value):
-    """Update pilot contact number."""
     return self._execute_query(self.sql_update_pilot_contact, (new_value, pilot_id))
 
   def update_pilot_license(self, pilot_id, new_value):
-    """Update pilot license number."""
     return self._execute_query(self.sql_update_pilot_license, (new_value, pilot_id))
 
   def update_pilot_rank(self, pilot_id, new_value):
-    """Update pilot rank."""
     return self._execute_query(self.sql_update_pilot_rank, (new_value, pilot_id))
 
   def update_crew_role(self, crew_id, new_value):
-    """Update flight crew role."""
     return self._execute_query(self.sql_update_crew_role, (new_value, crew_id))
 
   def update_crew_flying_pilot(self, crew_id, new_value):
-    """Update flight crew flying pilot status."""
     return self._execute_query(self.sql_update_crew_flying_pilot, (new_value, crew_id))
 
   # ==================== DELETE METHODS ====================
@@ -492,19 +476,15 @@ class DBOperations:
   # ==================== EXISTENCE CHECK METHODS ====================
   
   def flight_exists(self, flight_id):
-    """Check if a flight exists."""
     return self._fetch_one(self.sql_check_flight_exists, (flight_id,))
 
   def destination_exists(self, dest_id):
-    """Check if a destination exists."""
     return self._fetch_one(self.sql_check_destination_exists, (dest_id,))
 
   def pilot_exists(self, pilot_id):
-    """Check if a pilot exists."""
     return self._fetch_one(self.sql_check_pilot_exists, (pilot_id,))
 
   def crew_exists(self, crew_id):
-    """Check if a flight crew record exists."""
     return self._fetch_one(self.sql_check_crew_exists, (crew_id,))
 
 
