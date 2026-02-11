@@ -174,7 +174,7 @@ class DBOperations:
       print("Error creating tables: " + str(e))
     finally:
       self.conn.close()
-
+#the query statements here use SELECT 1 in order to return simple boolean values for confirmation purposes 
   def insert_flight_crew(self):
     try:
       self.get_connection()
